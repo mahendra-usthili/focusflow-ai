@@ -49,6 +49,11 @@ const Dashboard = () => {
   });
   const totalFocusMinutes = Math.round(todaySessions.reduce((acc, curr) => acc + curr.duration, 0) / 60);
 
+  // Active Goals
+  const activeGoals = goals.filter(g => {
+    if (!g.milestones || g.milestones.length === 0) return true;
+    const completed = g.milestones.filter(m => m.completed).length;
+    return completed < g.milestones.length;
   }).slice(0, 2);
 
   // Dynamic Streak Calculation
