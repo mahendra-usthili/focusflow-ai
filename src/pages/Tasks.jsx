@@ -13,6 +13,7 @@ const Tasks = () => {
   const [description, setDescription] = useState('');
   const [priority, setPriority] = useState('medium');
   const [category, setCategory] = useState('work');
+  const [dueDate, setDueDate] = useState('');
   
   // Filter & Sort
   const [filter, setFilter] = useState('all'); // all, active, completed
@@ -23,6 +24,7 @@ const Tasks = () => {
     setDescription('');
     setPriority('medium');
     setCategory('work');
+    setDueDate('');
     setEditingTask(null);
     setIsModalOpen(false);
   };
@@ -32,6 +34,7 @@ const Tasks = () => {
     setDescription(task.description || '');
     setPriority(task.priority || 'medium');
     setCategory(task.category || 'work');
+    setDueDate(task.dueDate || '');
     setEditingTask(task);
     setIsModalOpen(true);
   };
@@ -46,7 +49,7 @@ const Tasks = () => {
       priority,
       category,
       completed: editingTask ? editingTask.completed : false,
-      dueDate: null // Add date picker later
+      dueDate: dueDate || null
     };
 
     if (editingTask) {
@@ -75,6 +78,16 @@ const Tasks = () => {
       case 'low': return 'text-blue-500 bg-blue-500/10 border-blue-500/20';
       default: return 'text-dark-500 bg-dark-500/10 border-dark-500/20';
     }
+  };
+
+  const isOverdue = (date) => {
+    if (!date) return false;
+    return new Date(date) < new Date().setHours(0,0,0,0);
+  };
+
+  const formatDate = (date) => {
+    if (!date) return null;
+    return new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   };
 
   return (
@@ -171,6 +184,17 @@ const Tasks = () => {
                     <span className="text-xs text-dark-500 dark:text-dark-400 font-medium capitalize bg-dark-100 dark:bg-dark-800 px-2 py-1 rounded">
                       {task.category}
                     </span>
+                    {task.dueDate && (
+                      <span className={`text-[10px] font-bold flex items-center gap-1 px-2 py-1 rounded border ${
+                        task.completed ? 'text-dark-400 border-dark-200' : 
+                        isOverdue(task.dueDate) ? 'text-red-500 bg-red-500/10 border-red-500/20' : 
+                        'text-primary-500 bg-primary-500/10 border-primary-500/20'
+                      }`}>
+                        <Calendar size={10} />
+                        {formatDate(task.dueDate)}
+                        {isOverdue(task.dueDate) && !task.completed && ' (Overdue)'}
+                      </span>
+                    )}
                   </div>
                 </div>
 
@@ -228,6 +252,16 @@ const Tasks = () => {
                     onChange={(e) => setDescription(e.target.value)}
                     placeholder="Add more details..."
                     className="input-field min-h-[100px] resize-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-dark-500 uppercase tracking-wider mb-2">Due Date</label>
+                  <input 
+                    type="date" 
+                    value={dueDate}
+                    onChange={(e) => setDueDate(e.target.value)}
+                    className="input-field"
                   />
                 </div>
 

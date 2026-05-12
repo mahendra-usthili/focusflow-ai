@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { Play, Pause, Square, RotateCcw, Coffee, Target, Award } from 'lucide-react';
+import { Play, Pause, Square, RotateCcw, Coffee, Target, Award, Music, Volume2, Wind, CloudRain, Coffee as CoffeeIcon } from 'lucide-react';
 import { useFirestore } from '../hooks/useFirestore';
 
 const MODES = {
@@ -9,12 +9,39 @@ const MODES = {
   longBreak: { time: 15 * 60, label: 'Long Break', color: 'text-purple-500', bg: 'bg-purple-500' }
 };
 
+const AMBIENT_SOUNDS = [
+  { id: 'none', label: 'None', icon: Music },
+  { id: 'rain', label: 'Rain', icon: CloudRain, url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3' }, // Placeholder
+  { id: 'cafe', label: 'Cafe', icon: CoffeeIcon, url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3' }, // Placeholder
+  { id: 'lofi', label: 'Lo-Fi', icon: Wind, url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3' } // Placeholder
+];
+
 const Focus = () => {
   const [mode, setMode] = useState('focus');
   const [timeLeft, setTimeLeft] = useState(MODES.focus.time);
   const [isActive, setIsActive] = useState(false);
+  const [ambientSound, setAmbientSound] = useState('none');
+  const [volume, setVolume] = useState(0.5);
   const { addDocument, data: sessions } = useFirestore('focusSessions');
   const timerRef = useRef(null);
+  const audioRef = useRef(null);
+
+  useEffect(() => {
+    if (ambientSound !== 'none' && isActive) {
+      if (!audioRef.current) {
+        audioRef.current = new Audio(AMBIENT_SOUNDS.find(s => s.id === ambientSound).url);
+        audioRef.current.loop = true;
+      }
+      audioRef.current.volume = volume;
+      audioRef.current.play().catch(e => console.log('Audio play blocked:', e));
+    } else if (audioRef.current) {
+      audioRef.current.pause();
+    }
+    
+    return () => {
+      if (audioRef.current) audioRef.current.pause();
+    };
+  }, [ambientSound, isActive, volume]);
 
   useEffect(() => {
     if (isActive && timeLeft > 0) {
@@ -205,6 +232,47 @@ const Focus = () => {
         </div>
 
         <div className="glass-panel p-6 rounded-3xl flex-1">
+          <h3 className="font-display font-bold text-lg mb-4 flex items-center gap-2">
+            <Music size={20} className="text-primary-500" />
+            Ambient Sounds
+          </h3>
+          <div className="grid grid-cols-2 gap-2 mb-6">
+            {AMBIENT_SOUNDS.map(sound => (
+              <button
+                key={sound.id}
+                onClick={() => setAmbientSound(sound.id)}
+                className={`flex items-center gap-2 p-2.5 rounded-xl text-xs font-bold transition-all border ${
+                  ambientSound === sound.id 
+                    ? 'bg-primary-500/10 border-primary-500 text-primary-500' 
+                    : 'bg-dark-50 dark:bg-dark-800 border-transparent text-dark-500 hover:border-dark-200 dark:hover:border-dark-700'
+                }`}
+              >
+                <sound.icon size={14} />
+                {sound.label}
+              </button>
+            ))}
+          </div>
+          
+          {ambientSound !== 'none' && (
+            <div className="space-y-2">
+              <div className="flex justify-between text-[10px] font-bold text-dark-400 uppercase tracking-widest">
+                <span>Volume</span>
+                <span>{Math.round(volume * 100)}%</span>
+              </div>
+              <input 
+                type="range" 
+                min="0" 
+                max="1" 
+                step="0.01" 
+                value={volume}
+                onChange={(e) => setVolume(parseFloat(e.target.value))}
+                className="w-full h-1.5 bg-dark-200 dark:bg-dark-700 rounded-lg appearance-none cursor-pointer accent-primary-500"
+              />
+            </div>
+          )}
+        </div>
+
+        <div className="glass-panel p-6 rounded-3xl h-64 overflow-y-auto custom-scrollbar">
           <h3 className="font-display font-bold text-lg mb-4">Recent Sessions</h3>
           {todaySessions.length === 0 ? (
             <p className="text-sm text-dark-500">No sessions completed today.</p>

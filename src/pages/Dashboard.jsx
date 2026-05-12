@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useFirestore } from '../hooks/useFirestore';
 import { Link } from 'react-router-dom';
@@ -49,12 +49,34 @@ const Dashboard = () => {
   });
   const totalFocusMinutes = Math.round(todaySessions.reduce((acc, curr) => acc + curr.duration, 0) / 60);
 
-  // Active Goals
-  const activeGoals = goals.filter(g => {
-    if (!g.milestones || g.milestones.length === 0) return true;
-    const completed = g.milestones.filter(m => m.completed).length;
-    return completed < g.milestones.length;
   }).slice(0, 2);
+
+  // Dynamic Streak Calculation
+  const streak = useMemo(() => {
+    if (!focusSessions.length) return 0;
+    
+    // Sort dates descending
+    const dates = focusSessions
+      .map(s => new Date(s.createdAt?.seconds * 1000 || s.date).setHours(0,0,0,0))
+      .sort((a, b) => b - a);
+    
+    const uniqueDates = [...new Set(dates)];
+    let currentStreak = 0;
+    let today = new Date().setHours(0,0,0,0);
+    
+    // Check if the most recent activity is today or yesterday
+    if (uniqueDates[0] < today - 86400000) return 0;
+
+    for (let i = 0; i < uniqueDates.length; i++) {
+      const expectedDate = today - (i * 86400000);
+      if (uniqueDates[i] === expectedDate) {
+        currentStreak++;
+      } else {
+        break;
+      }
+    }
+    return currentStreak;
+  }, [focusSessions]);
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -129,7 +151,7 @@ const Dashboard = () => {
             <Award size={24} />
           </div>
           <div>
-            <p className="text-3xl font-display font-bold text-dark-900 dark:text-white">5</p>
+            <p className="text-3xl font-display font-bold text-dark-900 dark:text-white">{streak}</p>
             <p className="text-sm font-medium text-dark-500 uppercase tracking-wider">Day Streak</p>
           </div>
         </div>
