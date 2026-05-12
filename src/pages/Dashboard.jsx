@@ -19,6 +19,33 @@ const Dashboard = () => {
   const { data: focusSessions, loading: focusLoading } = useFirestore('focusSessions');
   const { data: goals, loading: goalsLoading } = useFirestore('goals');
 
+  // Dynamic Streak Calculation (Moved to top to follow Rules of Hooks)
+  const streak = useMemo(() => {
+    if (!focusSessions.length) return 0;
+    
+    // Sort dates descending
+    const dates = focusSessions
+      .map(s => new Date(s.createdAt?.seconds * 1000 || s.date).setHours(0,0,0,0))
+      .sort((a, b) => b - a);
+    
+    const uniqueDates = [...new Set(dates)];
+    let currentStreak = 0;
+    let today = new Date().setHours(0,0,0,0);
+    
+    // Check if the most recent activity is today or yesterday
+    if (uniqueDates[0] < today - 86400000) return 0;
+
+    for (let i = 0; i < uniqueDates.length; i++) {
+      const expectedDate = today - (i * 86400000);
+      if (uniqueDates[i] === expectedDate) {
+        currentStreak++;
+      } else {
+        break;
+      }
+    }
+    return currentStreak;
+  }, [focusSessions]);
+
   const loading = tasksLoading || focusLoading || goalsLoading;
 
   if (loading) {
@@ -56,32 +83,6 @@ const Dashboard = () => {
     return completed < g.milestones.length;
   }).slice(0, 2);
 
-  // Dynamic Streak Calculation
-  const streak = useMemo(() => {
-    if (!focusSessions.length) return 0;
-    
-    // Sort dates descending
-    const dates = focusSessions
-      .map(s => new Date(s.createdAt?.seconds * 1000 || s.date).setHours(0,0,0,0))
-      .sort((a, b) => b - a);
-    
-    const uniqueDates = [...new Set(dates)];
-    let currentStreak = 0;
-    let today = new Date().setHours(0,0,0,0);
-    
-    // Check if the most recent activity is today or yesterday
-    if (uniqueDates[0] < today - 86400000) return 0;
-
-    for (let i = 0; i < uniqueDates.length; i++) {
-      const expectedDate = today - (i * 86400000);
-      if (uniqueDates[i] === expectedDate) {
-        currentStreak++;
-      } else {
-        break;
-      }
-    }
-    return currentStreak;
-  }, [focusSessions]);
 
   const getGreeting = () => {
     const hour = new Date().getHours();
