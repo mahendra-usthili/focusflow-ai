@@ -27,6 +27,26 @@ const Tasks = () => {
   const [taskToDelete, setTaskToDelete] = useState(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
+  // Helper Functions (Moved to top to prevent initialization errors)
+  const isOverdue = (date) => {
+    if (!date) return false;
+    return new Date(date) < new Date().setHours(0,0,0,0);
+  };
+
+  const formatDate = (date) => {
+    if (!date) return null;
+    return new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  };
+
+  const getPriorityColor = (level) => {
+    switch (level) {
+      case 'high': return 'text-red-500 bg-red-500/10 border-red-500/20';
+      case 'medium': return 'text-orange-500 bg-orange-500/10 border-orange-500/20';
+      case 'low': return 'text-blue-500 bg-blue-500/10 border-blue-500/20';
+      default: return 'text-dark-500 bg-dark-500/10 border-dark-500/20';
+    }
+  };
+
   const resetForm = () => {
     setTitle('');
     setDescription('');
@@ -123,24 +143,6 @@ const Tasks = () => {
   const pinnedTasks = filteredTasks.filter(t => t.isPinned && !t.completed);
   const otherTasks = filteredTasks.filter(t => !t.isPinned || t.completed);
 
-  const getPriorityColor = (level) => {
-    switch (level) {
-      case 'high': return 'text-red-500 bg-red-500/10 border-red-500/20';
-      case 'medium': return 'text-orange-500 bg-orange-500/10 border-orange-500/20';
-      case 'low': return 'text-blue-500 bg-blue-500/10 border-blue-500/20';
-      default: return 'text-dark-500 bg-dark-500/10 border-dark-500/20';
-    }
-  };
-
-  const isOverdue = (date) => {
-    if (!date) return false;
-    return new Date(date) < new Date().setHours(0,0,0,0);
-  };
-
-  const formatDate = (date) => {
-    if (!date) return null;
-    return new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  };
 
   return (
     <div className="h-full flex flex-col">
