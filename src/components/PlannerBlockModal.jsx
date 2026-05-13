@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { X, Save, Clock, Tag, Flag } from 'lucide-react';
 
@@ -16,15 +16,34 @@ const PlannerBlockModal = ({ isOpen, onClose, onSave, initialData }) => {
     if (initialData) setBlock(initialData);
   }, [initialData]);
 
+  // Prevent body scroll when modal is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-dark-900/60 backdrop-blur-sm">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 md:p-6 overflow-hidden">
+      <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        onClick={onClose}
+        className="absolute inset-0 bg-dark-900/80 backdrop-blur-md"
+      />
       <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.95 }}
-        className="bg-white dark:bg-dark-900 border border-dark-200 dark:border-dark-700 w-full max-w-lg rounded-[2rem] shadow-2xl overflow-hidden"
+        initial={{ opacity: 0, scale: 0.9, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.9, y: 20 }}
+        className="bg-white dark:bg-dark-900 border border-dark-200 dark:border-dark-700 w-full max-w-lg rounded-[2.5rem] shadow-2xl relative z-10 overflow-hidden"
       >
         <div className="p-6 border-b border-dark-100 dark:border-dark-800 flex justify-between items-center bg-gradient-to-r from-primary-500/5 to-transparent">
           <h2 className="text-xl font-display font-black text-dark-900 dark:text-white">
@@ -119,4 +138,4 @@ const PlannerBlockModal = ({ isOpen, onClose, onSave, initialData }) => {
   );
 };
 
-export default AddBlockModal;
+export default PlannerBlockModal;

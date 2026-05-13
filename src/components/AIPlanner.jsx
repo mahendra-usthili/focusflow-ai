@@ -173,20 +173,6 @@ const AIPlanner = ({ tasks, focusSessions, goals }) => {
     setSuccessMsg('Block deleted. Undo?');
   };
 
-  const handleDuplicateBlock = (block) => {
-    addToUndo(currentPlan);
-    const duplicated = { 
-      ...block, 
-      id: Math.random().toString(36).substr(2, 9),
-      title: `${block.title} (Copy)`,
-      isCompleted: false 
-    };
-    const newPlan = [...currentPlan, duplicated];
-    setCurrentPlan(newPlan);
-    savePlanToFirestore(newPlan);
-    setSuccessMsg('Block duplicated!');
-  };
-
   const handleReorder = (index, direction) => {
     if (direction === 'up' && index === 0) return;
     if (direction === 'down' && index === currentPlan.length - 1) return;
@@ -320,7 +306,6 @@ const AIPlanner = ({ tasks, focusSessions, goals }) => {
                   onTogglePin={(b) => updateBlockState(b.id, { isPinned: !b.isPinned })}
                   onToggleStar={(b) => updateBlockState(b.id, { isStarred: !b.isStarred })}
                   onDelete={(b) => handleDeleteBlock(b.id)}
-                  onDuplicate={(b) => handleDuplicateBlock(b)}
                   onEdit={(b) => {
                     setEditingBlock(b);
                     setIsModalOpen(true);

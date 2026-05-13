@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Clock, Sun, Moon, Zap, Coffee, Target, Save } from 'lucide-react';
 
@@ -18,15 +18,34 @@ const PlannerSettings = ({ isOpen, onClose, preferences, onSave }) => {
     { id: 'relaxed', label: 'Relaxed', icon: <Moon size={16} />, desc: 'Gentle flow with more downtime' }
   ];
 
+  // Prevent body scroll when modal is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-dark-900/60 backdrop-blur-sm">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 md:p-6 overflow-hidden">
+      <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        onClick={onClose}
+        className="absolute inset-0 bg-dark-900/80 backdrop-blur-md"
+      />
       <motion.div
-        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+        initial={{ opacity: 0, scale: 0.9, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.95, y: 20 }}
-        className="bg-white dark:bg-dark-900 border border-dark-200 dark:border-dark-700 w-full max-w-2xl rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+        exit={{ opacity: 0, scale: 0.9, y: 20 }}
+        className="bg-white dark:bg-dark-900 border border-dark-200 dark:border-dark-700 w-full max-w-2xl rounded-[3rem] shadow-2xl relative z-10 overflow-hidden flex flex-col max-h-[90vh]"
       >
         {/* Header */}
         <div className="p-8 border-b border-dark-100 dark:border-dark-800 flex justify-between items-center bg-gradient-to-r from-primary-500/5 to-transparent">
