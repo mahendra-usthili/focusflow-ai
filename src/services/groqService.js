@@ -183,10 +183,10 @@ export const buildUserContext = (tasks = [], sessions = [], goals = []) => {
 };
 
 /**
- * Generate a structured daily plan using user data.
+ * Generate a structured daily plan using user data and preferences.
  * Returns a JSON-parsable plan with time blocks, reasoning, and recommendations.
  */
-export const generateDailyPlan = async (tasks, focusSessions, goals) => {
+export const generateDailyPlan = async (tasks, focusSessions, goals, preferences = null) => {
   if (!isGroqConfigured()) {
     throw new Error('GROQ_NOT_CONFIGURED');
   }
@@ -194,6 +194,13 @@ export const generateDailyPlan = async (tasks, focusSessions, goals) => {
   const context = buildUserContext(tasks, focusSessions, goals);
   const detailedContext = {
     ...context,
+    preferences: preferences || {
+      wakeUpTime: '07:00',
+      sleepTime: '23:00',
+      focusDuration: 50,
+      breakDuration: 10,
+      productivityStyle: 'balanced'
+    },
     activeTasks: tasks.filter(t => !t.completed).map(t => ({
       title: t.title,
       priority: t.priority,
@@ -205,33 +212,46 @@ export const generateDailyPlan = async (tasks, focusSessions, goals) => {
     recentGoals: goals.slice(0, 5).map(g => ({ title: g.title, progress: g.milestones?.filter(m => m.completed).length / g.milestones?.length }))
   };
 
-  const plannerPrompt = `As FocusFlow AI, generate a HIGH-FIDELITY Daily Productivity Plan based on the provided user context.
+  const plannerPrompt = `As FocusFlow AI, generate a HIGH-FIDELITY Daily Productivity Plan based on the provided user context and preferences.
   
+  USER PREFERENCES:
+  - Wake up: ${detailedContext.preferences.wakeUpTime}
+  - Sleep: ${detailedContext.preferences.sleepTime}
+  - Focus Duration: ${detailedContext.preferences.focusDuration}m
+  - Break Duration: ${detailedContext.preferences.breakDuration}m
+  - Style: ${detailedContext.preferences.productivityStyle}
+
   FORMAT REQUIREMENTS:
   - Respond ONLY with a valid JSON object.
-  - Do NOT include any text before or after the JSON.
   - Structure:
     {
       "plan": [
         {
-          "time": "09:00 - 10:30",
-          "title": "Task or Block Title",
-          "duration": "90m",
+          "id": "unique_string",
+          "time": "HH:MM - HH:MM",
+          "title": "Block Title",
+          "duration": "Xm",
           "category": "Work/Health/etc",
           "priority": "high/medium/low",
-          "reasoning": "Brief AI reasoning for this block"
+          "reasoning": "Brief reasoning",
+          "isCompleted": false,
+          "isPinned": false,
+          "isStarred": false
         }
       ],
       "recommendations": ["Tip 1", "Tip 2"],
-      "focusAdvice": "Specific focus strategy for today"
+      "focusAdvice": "Strategy"
     }
 
   PRIORITIZATION RULES:
-  1. Overdue tasks must be handled in the first morning block.
-  2. Pinned tasks take absolute priority.
-  3. Starred tasks follow pinned tasks.
-  4. Balance focus blocks with breaks based on previous focus session history.
-  5. Align plan with active goals.`;
+  1. Respect the wake-up and sleep times strictly.
+  2. Overdue tasks must be handled in the first morning block.
+  3. Pinned tasks take absolute priority.
+  4. Use the preferred focus/break durations to structure the blocks.
+  5. Apply the "${detailedContext.preferences.productivityStyle}" style:
+     - balanced: Regular focus/break intervals.
+     - intense: Longer deep work focus, shorter breaks.
+     - relaxed: Shorter focus, more flexible breaks.`;
 
   const messages = [
     { role: 'system', content: plannerPrompt },
