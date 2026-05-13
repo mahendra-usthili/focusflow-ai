@@ -183,6 +183,97 @@ export const buildUserContext = (tasks = [], sessions = [], goals = []) => {
 };
 
 /**
+ * Generate a structured daily plan using user data.
+ * Returns a JSON-parsable plan with time blocks, reasoning, and recommendations.
+ */
+export const generateDailyPlan = async (tasks, focusSessions, goals) => {
+  if (!isGroqConfigured()) {
+    throw new Error('GROQ_NOT_CONFIGURED');
+  }
+
+  const context = buildUserContext(tasks, focusSessions, goals);
+  const detailedContext = {
+    ...context,
+    activeTasks: tasks.filter(t => !t.completed).map(t => ({
+      title: t.title,
+      priority: t.priority,
+      category: t.category,
+      isStarred: t.isStarred || false,
+      isPinned: t.isPinned || false,
+      dueDate: t.dueDate || null
+    })),
+    recentGoals: goals.slice(0, 5).map(g => ({ title: g.title, progress: g.milestones?.filter(m => m.completed).length / g.milestones?.length }))
+  };
+
+  const plannerPrompt = `As FocusFlow AI, generate a HIGH-FIDELITY Daily Productivity Plan based on the provided user context.
+  
+  FORMAT REQUIREMENTS:
+  - Respond ONLY with a valid JSON object.
+  - Do NOT include any text before or after the JSON.
+  - Structure:
+    {
+      "plan": [
+        {
+          "time": "09:00 - 10:30",
+          "title": "Task or Block Title",
+          "duration": "90m",
+          "category": "Work/Health/etc",
+          "priority": "high/medium/low",
+          "reasoning": "Brief AI reasoning for this block"
+        }
+      ],
+      "recommendations": ["Tip 1", "Tip 2"],
+      "focusAdvice": "Specific focus strategy for today"
+    }
+
+  PRIORITIZATION RULES:
+  1. Overdue tasks must be handled in the first morning block.
+  2. Pinned tasks take absolute priority.
+  3. Starred tasks follow pinned tasks.
+  4. Balance focus blocks with breaks based on previous focus session history.
+  5. Align plan with active goals.`;
+
+  const messages = [
+    { role: 'system', content: plannerPrompt },
+    { role: 'user', content: `Generate my daily plan based on this data: ${JSON.stringify(detailedContext)}` }
+  ];
+
+  try {
+    const response = await fetch(GROQ_API_URL, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${GROQ_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: MODEL,
+        messages,
+        max_tokens: 2048,
+        temperature: 0.5, // Lower temperature for more consistent JSON
+        stream: false,
+      }),
+    });
+
+    if (!response.ok) throw new Error('PLANNER_API_ERROR');
+    
+    const result = await response.json();
+    const content = result.choices?.[0]?.message?.content;
+    
+    // Attempt to parse JSON from the response (in case AI adds markdown blocks)
+    try {
+      const jsonStr = content.match(/\{[\s\S]*\}/)?.[0] || content;
+      return JSON.parse(jsonStr);
+    } catch (e) {
+      console.error('Failed to parse AI plan:', content);
+      throw new Error('INVALID_AI_RESPONSE');
+    }
+  } catch (err) {
+    console.error('Daily Planner Error:', err);
+    throw err;
+  }
+};
+
+/**
  * Get friendly error message for the UI.
  */
 export const getErrorMessage = (error) => {

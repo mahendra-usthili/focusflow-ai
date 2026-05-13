@@ -10,8 +10,10 @@ import {
   ArrowRight,
   TrendingUp,
   Award,
-  Zap
+  Zap,
+  Sparkles
 } from 'lucide-react';
+import AIPlanner from '../components/AIPlanner';
 
 const Dashboard = () => {
   const { currentUser } = useAuth();
@@ -164,85 +166,90 @@ const Dashboard = () => {
       </div>
 
       {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         
-        {/* Recent Tasks */}
-        <div className="glass-panel p-6 rounded-3xl flex flex-col">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="font-display font-bold text-xl flex items-center gap-2">
-              <CheckSquare className="text-primary-500" />
-              Priority Tasks
-            </h2>
-            <Link to="/tasks" className="text-sm font-bold text-primary-500 hover:text-primary-600 flex items-center gap-1">
-              View All <ArrowRight size={16} />
-            </Link>
-          </div>
-          
-          <div className="space-y-3 flex-1">
-            {activeTasks.length === 0 ? (
-              <p className="text-dark-500 text-sm text-center py-10">You're all caught up!</p>
-            ) : (
-              activeTasks.map(task => (
-                <div key={task.id} className="p-4 rounded-2xl bg-dark-50 dark:bg-dark-800 border border-dark-100 dark:border-dark-700 flex items-center justify-between group hover:border-primary-500/30 transition-colors">
-                  <div className="flex items-center gap-3">
-                    <div className="w-3 h-3 rounded-full border-2 border-primary-500"></div>
-                    <span className="font-semibold text-dark-800 dark:text-white">{task.title}</span>
-                  </div>
-                  <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-lg ${
-                    task.priority === 'high' ? 'bg-red-500/10 text-red-500' :
-                    task.priority === 'medium' ? 'bg-orange-500/10 text-orange-500' :
-                    'bg-blue-500/10 text-blue-500'
-                  }`}>
-                    {task.priority}
-                  </span>
-                </div>
-              ))
-            )}
-          </div>
+        {/* AI Planner Section - 7/12 width */}
+        <div className="lg:col-span-7 h-full min-h-[600px]">
+          <AIPlanner tasks={tasks} focusSessions={focusSessions} goals={goals} />
         </div>
 
-        {/* Active Goals */}
-        <div className="glass-panel p-6 rounded-3xl flex flex-col">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="font-display font-bold text-xl flex items-center gap-2">
-              <Target className="text-orange-500" />
-              Active Goals
-            </h2>
-            <Link to="/goals" className="text-sm font-bold text-primary-500 hover:text-primary-600 flex items-center gap-1">
-              View All <ArrowRight size={16} />
-            </Link>
-          </div>
-          
-          <div className="space-y-4 flex-1">
-            {activeGoals.length === 0 ? (
-              <p className="text-dark-500 text-sm text-center py-10">No active goals currently.</p>
-            ) : (
-              activeGoals.map(goal => {
-                const completed = goal.milestones ? goal.milestones.filter(m => m.completed).length : 0;
-                const total = goal.milestones ? goal.milestones.length : 0;
-                const progress = total > 0 ? Math.round((completed / total) * 100) : 0;
-                
-                return (
-                  <div key={goal.id} className="p-5 rounded-2xl bg-dark-50 dark:bg-dark-800 border border-dark-100 dark:border-dark-700">
-                    <div className="flex justify-between items-start mb-4">
-                      <h3 className="font-bold text-dark-900 dark:text-white">{goal.title}</h3>
-                      <span className="text-sm font-bold text-primary-500">{progress}%</span>
+        {/* Right Column - 5/12 width */}
+        <div className="lg:col-span-5 space-y-8">
+          {/* Recent Tasks */}
+          <div className="glass-panel p-6 rounded-3xl flex flex-col">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="font-display font-bold text-xl flex items-center gap-2">
+                <CheckSquare className="text-primary-500" />
+                Priority Tasks
+              </h2>
+              <Link to="/tasks" className="text-sm font-bold text-primary-500 hover:text-primary-600 flex items-center gap-1">
+                View All <ArrowRight size={16} />
+              </Link>
+            </div>
+            
+            <div className="space-y-3 flex-1">
+              {activeTasks.length === 0 ? (
+                <p className="text-dark-500 text-sm text-center py-10">You're all caught up!</p>
+              ) : (
+                activeTasks.map(task => (
+                  <div key={task.id} className="p-4 rounded-2xl bg-dark-50 dark:bg-dark-800 border border-dark-100 dark:border-dark-700 flex items-center justify-between group hover:border-primary-500/30 transition-colors">
+                    <div className="flex items-center gap-3">
+                      <div className="w-3 h-3 rounded-full border-2 border-primary-500"></div>
+                      <span className="font-semibold text-dark-800 dark:text-white truncate max-w-[150px] md:max-w-[200px]">{task.title}</span>
                     </div>
-                    <div className="h-2 w-full bg-dark-200 dark:bg-dark-700 rounded-full overflow-hidden">
-                      <motion.div 
-                        initial={{ width: 0 }}
-                        animate={{ width: `${progress}%` }}
-                        transition={{ duration: 1 }}
-                        className="h-full bg-gradient-to-r from-orange-400 to-primary-500 rounded-full"
-                      />
-                    </div>
-                    <p className="text-xs font-semibold text-dark-500 mt-3 text-right">
-                      {completed} of {total} milestones
-                    </p>
+                    <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-lg ${
+                      task.priority === 'high' ? 'bg-red-500/10 text-red-500' :
+                      task.priority === 'medium' ? 'bg-orange-500/10 text-orange-500' :
+                      'bg-blue-500/10 text-blue-500'
+                    }`}>
+                      {task.priority}
+                    </span>
                   </div>
-                );
-              })
-            )}
+                ))
+              )}
+            </div>
+          </div>
+
+          {/* Active Goals */}
+          <div className="glass-panel p-6 rounded-3xl flex flex-col">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="font-display font-bold text-xl flex items-center gap-2">
+                <Target className="text-orange-500" />
+                Active Goals
+              </h2>
+              <Link to="/goals" className="text-sm font-bold text-primary-500 hover:text-primary-600 flex items-center gap-1">
+                View All <ArrowRight size={16} />
+              </Link>
+            </div>
+            
+            <div className="space-y-4 flex-1">
+              {activeGoals.length === 0 ? (
+                <p className="text-dark-500 text-sm text-center py-10">No active goals currently.</p>
+              ) : (
+                activeGoals.map(goal => {
+                  const completed = goal.milestones ? goal.milestones.filter(m => m.completed).length : 0;
+                  const total = goal.milestones ? goal.milestones.length : 0;
+                  const progress = total > 0 ? Math.round((completed / total) * 100) : 0;
+                  
+                  return (
+                    <div key={goal.id} className="p-5 rounded-2xl bg-dark-50 dark:bg-dark-800 border border-dark-100 dark:border-dark-700">
+                      <div className="flex justify-between items-start mb-4">
+                        <h3 className="font-bold text-dark-900 dark:text-white truncate pr-4">{goal.title}</h3>
+                        <span className="text-sm font-bold text-primary-500">{progress}%</span>
+                      </div>
+                      <div className="h-2 w-full bg-dark-200 dark:bg-dark-700 rounded-full overflow-hidden">
+                        <motion.div 
+                          initial={{ width: 0 }}
+                          animate={{ width: `${progress}%` }}
+                          transition={{ duration: 1 }}
+                          className="h-full bg-gradient-to-r from-orange-400 to-primary-500 rounded-full"
+                        />
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
           </div>
         </div>
 
